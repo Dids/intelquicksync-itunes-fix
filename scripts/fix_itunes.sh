@@ -3,8 +3,27 @@
 # Setup error handling
 set -e
 
+# Enable debugging
+#set -x
+
+# Handle signals
+exitHandler()
+{
+    log "Exit signal received, shutting down.."
+    exit 0
+}
+trap exitHandler SIGINT SIGTERM SIGKILL SIGHUP
+
 # Keep track of whether we just ran the fix or not
 RAN_FIX=false
+
+# Function for writing to the system log
+function log()
+{
+    if [ ! -z ${1+x} ]; then
+        logger -is -t intelquicksync-itunes-fix "${1}" 
+    fi
+}
 
 # Function for detecting if iTunes is running
 function detectionLoop()
@@ -17,7 +36,7 @@ function detectionLoop()
     if [[ ! "$ITUNES_PID" =~ ^[0-9]+$ ]]; then
         # Only continue if we didn't just run the fix
         if [ "$RAN_FIX" = false ]; then
-            echo "iTunes is not running, attempting to fix.."
+            log "iTunes is not running, attempting to fix.."
             iTunesFix
             RAN_FIX=true
         fi
@@ -35,7 +54,7 @@ function iTunesFix()
 
     # Verify that we have a valid PID
     if [[ "$ITUNES_LIB_PID" =~ ^[0-9]+$ ]]; then
-        echo -n "Running iTunes fix.."
+        log "Running iTunes fix.."
 
         # Terminate the iTunes library service
         kill -9 $ITUNES_LIB_PID
@@ -43,15 +62,14 @@ function iTunesFix()
         # Remove the "SC Info" folder
         rm -rf "/Users/Shared/SC Info/"
 
-        echo -n " done!"
-        echo ""
+        log "Successfully ran iTunes fix!"
     else
-        echo "iTunes library service not running, skipping fix.."
+        log "iTunes library service not running, skipping fix.."
     fi
 }
 
 # Start an infinite while loop
-echo "iTunes fix is starting.."
+log "Starting.."
 while :
 do
     # Run the detection loop
