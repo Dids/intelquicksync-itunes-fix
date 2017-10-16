@@ -29,7 +29,7 @@ function log()
 function detectionLoop()
 {
     # Check if iTunes is running
-    ITUNES_PID=`ps -A | grep -m1 "[i]Tunes.app/Contents/MacOS/iTunes" | awk '{print $1}'`
+    ITUNES_PID=`ps -A | grep "[i]Tunes.app/Contents/MacOS/iTunes" | grep -m1 -v "iTunesHelper" | awk '{print $1}'`
 
     # Verify that we don't have a valid PID,
     # but also keep "RAN_FIX" up to date
@@ -39,9 +39,11 @@ function detectionLoop()
             log "iTunes is not running, attempting to fix.."
             iTunesFix
             RAN_FIX=true
+        #else
+            #log "Fix already in place, skipping.."
         fi
     else
-        #echo "iTunes detected, skipping fix.."
+        #log "iTunes detected, skipping fix.."
         RAN_FIX=false
     fi
 }
